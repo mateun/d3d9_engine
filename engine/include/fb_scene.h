@@ -130,6 +130,7 @@ public:
 		MeshRenderCommandInfo* info = new MeshRenderCommandInfo();
 		info->vbuf = vb;
 		info->numberOfTriangles = _vertices.size() / 3;
+		info->pos = _position;
 		graphicsDevice.addRenderCommand(std::move(std::make_unique<MeshRenderCommand>(info)));
 	}
 private:
@@ -138,6 +139,71 @@ private:
 	LPDIRECT3DVERTEXBUFFER9 vb;
 	std::vector<VertexPosColor> _vertices;
 };
+
+class D3D9_ENGINE_API TexturedMeshNode : public SceneNode {
+public:
+	TexturedMeshNode(const MeshNode&) = delete;
+	TexturedMeshNode& operator=(const TexturedMeshNode&) = delete;
+	TexturedMeshNode(GraphicsDevice& gd, D3DXVECTOR3 pos, std::vector<VertexPosTexNormal> vertices, const std::string& textureName) : SceneNode(pos) {
+
+		HRESULT hr =D3DXCreateTextureFromFile(gd.getD3DDevice(), textureName.c_str(), &_tex);
+		if (FAILED(hr)) {
+			printf("Failed to load texture\n");
+			exit(1);
+		}
+
+		// Store the incoming original vertices in our node.
+		_vertices = std::move(vertices);
+
+		// Fill all vertices of the mesh into our node-local 
+		// vertex buffer.
+		BYTE* vbStart;
+
+		UINT length = _vertices.size() * sizeof(VertexPosTexNormal);
+		gd.getD3DDevice()->CreateVertexBuffer(length,
+			D3DUSAGE_WRITEONLY,
+			D3DFVF_XYZ | D3DFVF_NORMAL |D3DFVF_TEX1,
+			D3DPOOL_MANAGED,
+			&vb,
+			NULL);
+
+		hr = vb->Lock(0, 0, (void**)&vbStart, 0);
+		if (FAILED(hr)) {
+			printf("faild to lock vb\n");
+			exit(1);
+		}
+
+		memcpy(vbStart, _vertices.data(), length);
+		vb->Unlock();
+		if (FAILED(hr)) {
+			printf("faild to unlock vb\n");
+			exit(1);
+		}
+
+	}
+	virtual ~TexturedMeshNode() {
+		if (vb != nullptr) {
+			vb->Release();
+			vb = nullptr;
+		}
+	}
+
+	virtual void Render(GraphicsDevice& graphicsDevice) override {
+		TexturedMeshRenderCommandInfo* info = new TexturedMeshRenderCommandInfo();
+		info->vbuf = vb;
+		info->numberOfTriangles = _vertices.size() / 3;
+		info->pos = _position;
+		info->tex = _tex;
+		graphicsDevice.addRenderCommand(std::move(std::make_unique<TexturedMeshRenderCommand>(info)));
+	}
+private:
+	int _w;
+	int _h;
+	LPDIRECT3DVERTEXBUFFER9 vb;
+	LPDIRECT3DTEXTURE9 _tex;
+	std::vector<VertexPosTexNormal> _vertices;
+};
+
 
 class D3D9_ENGINE_API Scene {
 public:

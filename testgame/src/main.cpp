@@ -18,8 +18,15 @@ int main(int argc, char** args) {
 	vertices.push_back(VertexPosColor(.5f, -.5f, 2, 0xFFFFFFFF));
 	vertices.push_back(VertexPosColor(-.5f, -.5f, 2, 0xFFFFFFFF));
 
-	std::unique_ptr<SceneNode> meshNode = std::make_unique<MeshNode>(gd, D3DXVECTOR3(0, 0, 2), std::move(vertices));
+	std::unique_ptr<SceneNode> meshNode = std::make_unique<MeshNode>(gd, D3DXVECTOR3(0, 0, 0), std::move(vertices));
 	scene3d.addNode(std::move(meshNode));
+
+	std::vector<VertexPosTexNormal> texVertices;
+	texVertices.push_back(VertexPosTexNormal(0, .5f, 2, 0, 0, -1, .5f, 0));
+	texVertices.push_back(VertexPosTexNormal(.5f, -.5f, 2, 0, 0, -1, 1, 1));
+	texVertices.push_back(VertexPosTexNormal(-.5f, -.5f, 2, 0, 0, -1, 0, 1));
+	std::unique_ptr<SceneNode> texturedMeshMode = std::make_unique<TexturedMeshNode>(gd, D3DXVECTOR3(1, 1, 2), std::move(texVertices), "testimage2.png");
+	scene3d.addNode(std::move(texturedMeshMode));
 
     printf("start game loop\n");
 

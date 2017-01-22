@@ -62,10 +62,27 @@ public:
 struct MeshRenderCommandInfo {
 	LPDIRECT3DVERTEXBUFFER9 vbuf;
 	int numberOfTriangles;
+	D3DXVECTOR3 pos;
 };
+
 class MeshRenderCommand : public RenderCommand {
 public:
 	MeshRenderCommand(void* d) : RenderCommand(d) {}
+
+	void exec(LPDIRECT3DDEVICE9 device) override;
+};
+
+struct TexturedMeshRenderCommandInfo {
+	LPDIRECT3DVERTEXBUFFER9 vbuf;
+	int numberOfTriangles;
+	D3DXVECTOR3 pos;
+	LPDIRECT3DTEXTURE9 tex;
+};
+
+
+class TexturedMeshRenderCommand : public RenderCommand {
+public:
+	TexturedMeshRenderCommand(void* d) : RenderCommand(d) {}
 
 	void exec(LPDIRECT3DDEVICE9 device) override;
 };
