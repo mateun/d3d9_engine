@@ -57,3 +57,15 @@ public:
 
 	void exec(LPDIRECT3DDEVICE9 device) override;
 };
+
+
+struct MeshRenderCommandInfo {
+	LPDIRECT3DVERTEXBUFFER9 vbuf;
+	int numberOfTriangles;
+};
+class MeshRenderCommand : public RenderCommand {
+public:
+	MeshRenderCommand(void* d) : RenderCommand(d) {}
+
+	void exec(LPDIRECT3DDEVICE9 device) override;
+};

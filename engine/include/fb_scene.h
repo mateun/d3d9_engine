@@ -67,7 +67,7 @@ public:
 	}
 
 	virtual void Render(GraphicsDevice& graphicsDevice) override {
-		graphicsDevice.getD3DDevice()->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
+		
 		
 		TriangleScreenSpaceRenderCommandInfo* info = new TriangleScreenSpaceRenderCommandInfo();
 		info->vbuf = vb;
@@ -77,6 +77,66 @@ private:
 	int _w;
 	int _h;
 	LPDIRECT3DVERTEXBUFFER9 vb;
+};
+
+
+/**
+ * This node is a mesh of vertices which are given in model space.
+ */
+class D3D9_ENGINE_API MeshNode : public SceneNode {
+public:
+	MeshNode(const MeshNode&) = delete;
+	MeshNode& operator=(const MeshNode&) = delete;
+	MeshNode(GraphicsDevice& gd, D3DXVECTOR3 pos, std::vector<VertexPosColor> vertices) : SceneNode(pos) {
+
+		
+		// Store the incoming original vertices in our node.
+		_vertices = std::move(vertices);
+
+		// Fill all vertices of the mesh into our node-local 
+		// vertex buffer.
+		BYTE* vbStart;
+		
+		UINT length = _vertices.size() * sizeof(VertexPosColor);
+		gd.getD3DDevice()->CreateVertexBuffer(length,
+			D3DUSAGE_WRITEONLY,
+			D3DFVF_XYZ | D3DFVF_DIFFUSE,
+			D3DPOOL_MANAGED,
+			&vb,
+			NULL);
+
+		HRESULT hr = vb->Lock(0, 0, (void**)&vbStart, 0);
+		if (FAILED(hr)) {
+			printf("faild to lock vb\n");
+			exit(1);
+		}
+
+		memcpy(vbStart, _vertices.data(), length);
+		vb->Unlock();
+		if (FAILED(hr)) {
+			printf("faild to unlock vb\n");
+			exit(1);
+		}
+
+	}
+	virtual ~MeshNode() {
+		if (vb != nullptr) {
+			vb->Release();
+			vb = nullptr;
+		}
+	}
+
+	virtual void Render(GraphicsDevice& graphicsDevice) override {
+		MeshRenderCommandInfo* info = new MeshRenderCommandInfo();
+		info->vbuf = vb;
+		info->numberOfTriangles = _vertices.size() / 3;
+		graphicsDevice.addRenderCommand(std::move(std::make_unique<MeshRenderCommand>(info)));
+	}
+private:
+	int _w;
+	int _h;
+	LPDIRECT3DVERTEXBUFFER9 vb;
+	std::vector<VertexPosColor> _vertices;
 };
 
 class D3D9_ENGINE_API Scene {
@@ -96,6 +156,26 @@ public:
 	virtual ~SceneSimpleScreenSpace();
 	SceneSimpleScreenSpace(const SceneSimpleScreenSpace&) = delete;
 	SceneSimpleScreenSpace& operator=(const SceneSimpleScreenSpace&) = delete;
+	virtual void Render(GraphicsDevice& device) override {
+		for each(const std::unique_ptr<SceneNode>& n in _nodes) {
+			n->Render(device);
+		}
+	}
+
+	virtual void addNode(std::unique_ptr<SceneNode> n) {
+		_nodes.push_back(std::move(n));
+	}
+
+protected:
+	std::vector<std::unique_ptr<SceneNode>> _nodes;
+};
+
+class D3D9_ENGINE_API SceneSimple : public Scene {
+public:
+	SceneSimple();
+	virtual ~SceneSimple();
+	SceneSimple(const SceneSimple&) = delete;
+	SceneSimple& operator=(const SceneSimple&) = delete;
 	virtual void Render(GraphicsDevice& device) override {
 		for each(const std::unique_ptr<SceneNode>& n in _nodes) {
 			n->Render(device);
