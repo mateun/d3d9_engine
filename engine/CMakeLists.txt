@@ -9,8 +9,7 @@ add_definitions("-DD3D9_ENGINE_EXPORTS")
 
 
 add_library(engine SHARED ${sources} ${headers})
-target_link_libraries(engine dxguid.lib d3d9.lib)
-
+target_link_libraries(engine "C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Lib/x86/d3dx9.lib" dxguid.lib d3d9.lib)
 
 source_group("source" FILES ${sources})
 source_group("include" FILES ${headers})
